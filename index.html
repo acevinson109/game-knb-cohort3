@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GAME KNB? Cohort 3</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+@property --w{syntax:'<length>';inherits:true;initial-value:0px}
+:root{--rx:0deg;--ry:0deg;--qblur:20px}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:'Baloo 2',sans-serif;color:#fff;background:radial-gradient(ellipse at 50% 25%,#14688a,#082535 60%,#030b12)}
+#bg{position:fixed;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+.fl{position:absolute;bottom:-90px;opacity:.16;animation:fl linear infinite;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+@keyframes fl{to{transform:translateY(-120vh) rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.fl{animation-duration:200s}}
+#fx{position:fixed;inset:0;z-index:50;pointer-events:none}
+#app{position:relative;z-index:1;height:100vh}
+button{font-family:'Press Start 2P',monospace}
+.btn{font-size:clamp(9px,1.5vh,15px);padding:1.5vh 2vw;border:0;border-radius:12px;color:#fff;cursor:pointer;background:linear-gradient(#ff6a4a,#d1240c);box-shadow:0 8px 0 #7d1204,0 14px 18px #0009,inset 0 2px 0 #fff5;text-shadow:0 2px 0 #0007;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-3px) perspective(300px) rotateX(10deg)}
+.btn:active{transform:translateY(6px);box-shadow:0 2px 0 #7d1204,0 4px 6px #0009}
+.btn.g{background:linear-gradient(#45dc66,#1b8c35);box-shadow:0 8px 0 #0c4d1b,0 14px 18px #0009,inset 0 2px 0 #fff5}
+.btn.b{background:linear-gradient(#3f8cff,#1546a8);box-shadow:0 8px 0 #0a2660,0 14px 18px #0009,inset 0 2px 0 #fff5}
+.btn.y{background:linear-gradient(#fff06a,#e0b800);color:#321;text-shadow:none;box-shadow:0 8px 0 #7a6200,0 14px 18px #0009,inset 0 2px 0 #fff9}
+.btn.sm{padding:1vh 1vw;font-size:clamp(8px,1.3vh,12px);box-shadow:0 5px 0 #7d1204}
+.btn:disabled{filter:grayscale(1);opacity:.45;pointer-events:none}
+/* logo */
+.logo{display:inline-block;padding:.5em;border-radius:.6em;font-family:'Press Start 2P';background:linear-gradient(135deg,#f6f8fa,#8c97a3 40%,#eef1f5 60%,#7b8794);box-shadow:0 .5em 0 #4b5560,0 1em 2em #000a;transform:perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));transition:transform .15s}
+.lt{background:linear-gradient(#ff7a2b,#d3200f);border:.2em solid #ffe600;text-align:center;padding:.6em;margin-bottom:.5em;border-radius:.2em}
+.lt span{font-size:1.7em;color:#fff;-webkit-text-stroke:.08em #000;text-shadow:0 .1em 0 #ffe600,0 .2em 0 #000}
+.lr{display:flex;gap:.3em;margin-bottom:.3em}
+.lr i{flex:1;min-width:5em;text-align:center;font-style:normal;font-size:2.2em;padding:.35em 0;color:#fff;-webkit-text-stroke:.07em #000;text-shadow:0 .1em 0 #ffe600,0 .18em 0 #000;border:.12em solid #ffe600;background:linear-gradient(#2a6fe0,#123f93);box-shadow:inset 0 0 .4em #000a;transform:rotateX(90deg) scale(.3);opacity:0;transition:transform .55s cubic-bezier(.2,1.6,.4,1),opacity .3s}
+.lr.g i{background:linear-gradient(#37c85c,#157a2f)}
+.lr i.on{transform:none;opacity:1}
+/* home & join */
+.home{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6vh}
+.home .logo{font-size:2.1vh}
+.row{display:flex;gap:3vw;perspective:600px}
+.panel{background:#0a2a3dd9;border:2px solid #ffe600;border-radius:14px;padding:1vh 1vw;box-shadow:0 6px 0 #0006,inset 0 0 20px #0006;backdrop-filter:blur(4px)}
+.jn{width:min(520px,92vw);display:flex;flex-direction:column;gap:1.2vh;align-items:center;text-align:center}
+.jn h2{font-family:'Press Start 2P';font-size:2vh}
+input{width:100%;padding:1.1vh 1vw;font:700 2.2vh 'Baloo 2';border-radius:10px;border:3px solid #1a5fa8;background:#fff;color:#111;text-align:center;text-transform:uppercase}
+.cam{width:100%;aspect-ratio:4/3;max-height:36vh;background:#000;border-radius:12px;overflow:hidden;border:3px solid #ffe600}
+.cam video,.cam img{width:100%;height:100%;object-fit:cover}
+#vid{transform:scaleX(-1)}
+/* game */
+#game{--w:min(8.6vw,11.2vh);transition:--w .7s cubic-bezier(.4,0,.2,1);display:grid;grid-template-columns:22vw 1fr;gap:1vw;height:100vh;padding:1.2vh 1vw}
+#game.big{--w:min(8.6vw,9.4vh)}
+#side{display:flex;flex-direction:column;gap:1vh;min-height:0}
+#side h3{font-family:'Press Start 2P';font-size:1.3vh;color:#ffe600;margin-bottom:.6vh}
+.code{font-family:'Press Start 2P';font-size:4.4vh;letter-spacing:.3vh;text-align:center;color:#fff;text-shadow:0 .4vh 0 #d3200f;padding:.6vh 0}
+.lbp{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+#lb{flex:1;min-height:0;display:flex;flex-direction:column;container-type:size}
+.lbr{flex:1 1 0;min-height:0;display:flex;align-items:center;gap:.6vw;padding:.4vh .3vw;border-bottom:1px solid #fff2;--rh:calc(100cqh / var(--n,1));font-size:clamp(1.8vh,calc(var(--rh) * .24),3.4vh)}
+.lbr img{width:clamp(3vh,calc(var(--rh) * .62),10vh);height:clamp(3vh,calc(var(--rh) * .62),10vh);flex:none;border-radius:50%;object-fit:cover;background:#345}
+.lbr span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lbr em{font-style:normal;font-size:.82em;color:#ffe600}
+#ctl{display:flex;flex-direction:column;gap:1.2vh;align-items:stretch}
+#main{display:grid;grid-template-rows:auto 1fr auto;min-height:0;gap:.8vh}
+#hdr{display:flex;align-items:center;justify-content:space-between;height:9.5vh}
+#hdr .logo{font-size:.78vh}
+#rd{font-family:'Press Start 2P';font-size:1.9vh;text-shadow:0 .3vh 0 #000}
+#stage{position:relative;display:flex;justify-content:center;align-items:flex-start;min-height:0;perspective:1000px}
+#pyr{margin-top:6.5vh;transition:filter .4s}
+#stage.dim #pyr{filter:blur(5px) brightness(.5)}
+#stage.ko #pyr{margin:0;width:100%;height:100%;filter:none}
+.pin{position:relative;width:calc(var(--w)*5);height:calc(var(--w)*4.62);transform:rotateX(calc(14deg + var(--rx))) rotateY(var(--ry));transition:transform .15s}
+.hf{position:absolute;width:var(--w);height:calc(var(--w)*1.1547);transition:filter .4s}
+.hw,.hx{position:absolute;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+.hw{inset:1.5%;background:#ffe600}
+.hx{inset:5%;background:linear-gradient(160deg,#fff7 0,#0000 45%),linear-gradient(135deg,#3a82ee,#143c8a)}
+.hf.sel{cursor:pointer;animation:sp .7s ease-in-out infinite alternate;z-index:2}
+@keyframes sp{from{filter:drop-shadow(0 0 4px #fff)}to{filter:drop-shadow(0 0 16px #fff) brightness(1.3);transform:translateY(-4px) scale(1.06)}}
+.hf.cur .hx{animation:cu 1s ease-in-out infinite alternate}
+@keyframes cu{to{filter:brightness(1.4)}}
+.dots{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:.3vh;z-index:3;font-size:1.6vh;font-weight:800}
+.dots u{width:1.8vh;height:1.8vh;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 4px #000a}
+#qpop{position:absolute;top:0;left:50%;transform:translateX(-50%);width:min(80%,920px);z-index:5;pointer-events:none}
+#qpop>*{pointer-events:auto}
+.qp{position:relative;background:linear-gradient(#0e3b57f2,#07202ff2);border:3px solid #ffe600;border-radius:16px;padding:1.1vh 1.4vw;box-shadow:0 .8vh 0 #0008,0 2vh 4vh #000a;animation:pop .3s cubic-bezier(.2,1.5,.4,1);text-align:center}
+@keyframes pop{from{transform:scale(.7);opacity:0}}
+.qh{display:flex;justify-content:space-between;font-family:'Press Start 2P';font-size:1.3vh;color:#ffe600}
+.tm{font-size:2.6vh;color:#fff}.tm.r{color:#ff5a4a}
+.qx{font-size:clamp(13px,2.2vh,23px);font-weight:700;line-height:1.25;margin:.6vh 0 1vh}
+.cs{display:grid;grid-template-columns:1fr 1fr;gap:.8vh .8vw;text-align:left}
+.ch{padding:.7vh .8vw;font-size:clamp(11px,1.8vh,18px);line-height:1.2;background:#1a5fa8;border-radius:10px;border-bottom:.5vh solid #0a3366;transition:transform .15s,background .15s}
+.ch.can{cursor:pointer}.ch.can:hover{transform:translateY(-3px) perspective(300px) rotateX(10deg);background:#2a7bdc}
+.ch.ok{background:#1faa4b;border-color:#0b5f26;box-shadow:0 0 18px #3dff7a}
+.ch.bad{background:#c8281c;border-color:#6b0f08}
+.ch.big{text-align:center;font-family:'Press Start 2P';font-size:2.2vh;padding:2vh 0}
+.hint{margin-top:.8vh;font-size:1.7vh;color:#bfe}
+.bn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-4deg);background:#d3200f;border:4px solid #fff;padding:1vh 2vw;font-family:'Press Start 2P';font-size:2.6vh;border-radius:10px;box-shadow:0 8px 0 #7d1204;white-space:nowrap;z-index:9}
+.steal{font-family:'Press Start 2P';padding:2.5vh 1vw}.steal h1{font-size:6vh;color:#ffe600;text-shadow:0 .6vh 0 #d3200f;animation:sh .3s infinite alternate}
+@keyframes sh{to{transform:rotate(3deg) scale(1.05)}}
+.mvb{display:flex;gap:1.5vw;align-items:center;justify-content:center;flex-wrap:wrap}
+#teams{display:flex;gap:.7vw;justify-content:center;height:18vh;transition:height .7s cubic-bezier(.4,0,.2,1)}
+.tc{container-type:inline-size;flex:1 1 0;max-width:9.5vw;min-width:0;text-align:center;background:#0a2a3dd9;border:3px solid var(--c);border-radius:12px;padding:.5vh;position:relative;transition:transform .2s,box-shadow .2s,max-width .7s cubic-bezier(.4,0,.2,1)}
+.tc img{width:100%;height:10.5vh;object-fit:cover;border-radius:8px;background:#234;display:block;transition:height .7s cubic-bezier(.4,0,.2,1)}
+.tc b{display:block;font-size:1.8vh;line-height:1.1;margin-top:.4vh;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:font-size .7s}
+.tc small{font-size:1.3vh;color:#ffe600;transition:font-size .7s}
+#game.big #teams{height:29vh}
+#game.big .tc{max-width:15vw}
+#game.big .tc img{height:min(19vh,88cqw)}
+#game.big .tc b{font-size:2.6vh}
+#game.big .tc small{font-size:1.9vh}
+.tc.buz{transform:translateY(-1.5vh) scale(1.06);box-shadow:0 0 14px 6px var(--c),0 0 40px 12px var(--c);animation:bz .5s infinite alternate}
+@keyframes bz{to{box-shadow:0 0 22px 10px var(--c),0 0 60px 20px var(--c)}}
+.tc.out{border-color:#666}
+.tc.out>img,.tc.out>b,.tc.out>small{filter:grayscale(1) brightness(.5)}
+.tag{position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;text-align:center;border-radius:9px;background:#020a1099;pointer-events:none;animation:tgp .35s cubic-bezier(.2,1.6,.4,1)}
+.tag span{font-family:'Press Start 2P',monospace;color:#fff;font-size:14cqw;line-height:1.5;text-shadow:0 .1em 0 #d3200f,0 .2em .3em #000}
+.tag.el span{font-size:7.6cqw;line-height:1.7}
+@keyframes tgp{from{transform:scale(.6);opacity:0}}
+.tc.tg{cursor:pointer;animation:bz .5s infinite alternate;outline:3px dashed #fff}
+.ko{display:grid;grid-template-columns:1fr 1.7fr 1fr;gap:1.5vw;align-items:center;height:100%}
+.ko .qp{animation:none}
+.kt{position:relative;container-type:inline-size;text-align:center;border:4px solid var(--c);border-radius:16px;padding:1vh;background:#0a2a3dd9;transition:transform .2s}
+.kt img{width:100%;height:min(28vh,18vw);object-fit:cover;border-radius:10px}
+.kt b{display:block;font-size:2.6vh}.kt h1{font-family:'Press Start 2P';font-size:5vh;color:#ffe600}
+.kt.buz{box-shadow:0 0 20px 8px var(--c),0 0 60px 20px var(--c);transform:scale(1.05)}
+#qw{position:fixed;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;text-align:center;padding:6vw;pointer-events:none;opacity:0;visibility:hidden;-webkit-backdrop-filter:blur(var(--qblur));backdrop-filter:blur(var(--qblur));background:#03101a40;transition:opacity .6s ease,visibility .6s}
+#qw.on{opacity:1;visibility:visible}
+#qw>div{font-family:'Press Start 2P',monospace;color:#ffe600;line-height:1.7;text-shadow:0 .5vh 0 #d3200f,0 1.2vh 2.4vh #000a;font-size:clamp(14px,3.2vh,36px);max-width:80vw;transform:scale(.6);transition:transform .6s cubic-bezier(.2,1.5,.4,1)}
+#qw.on>div{transform:none;animation:qwp 1.4s ease-in-out .6s infinite alternate}
+#qw b{display:block;font-weight:400;font-size:1.7em;margin-bottom:.5em}
+@keyframes qwp{to{transform:scale(1.04)}}
+.mech{position:fixed;inset:0;z-index:60;background:#000b;display:flex;align-items:center;justify-content:center;padding:2vh 2vw}
+.mp{width:min(900px,96vw);max-height:92vh;overflow:auto;display:flex;flex-direction:column;gap:1.6vh;padding:2.5vh 2vw;background:#0a2a3df2}
+.mp h2{font-family:'Press Start 2P',monospace;font-size:clamp(14px,2.6vh,26px);color:#fff;text-align:center;text-shadow:0 .4vh 0 #d3200f}
+.mp h3{font-family:'Press Start 2P',monospace;font-size:clamp(10px,1.7vh,17px);color:#ffe600;margin-bottom:.8vh}
+.mp ul{padding-left:1.4em;font-size:clamp(13px,2.1vh,20px);line-height:1.35;display:flex;flex-direction:column;gap:.6vh}
+.mp b{color:#ffe600}
+.mp .btn{align-self:center}
+#ov{position:absolute;inset:0;z-index:20;pointer-events:none}
+.ov{position:absolute;inset:0;background:#000b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5vh;pointer-events:auto;font-family:'Press Start 2P';text-align:center}
+.ov h1{font-size:5vh;text-shadow:0 .6vh 0 #d3200f}.ov h3{font-size:3vh;color:#ffe600}
+.ov img{width:40vw;height:min(30vw,56vh);object-fit:cover;border:.8vh solid #ffe600;border-radius:18px;box-shadow:0 0 5vh #ffe600}
+.ov.champ{background:radial-gradient(#0008,#000d)}
+
+#netstatus{position:fixed;right:10px;bottom:8px;z-index:80;background:#071c2ddd;border:1px solid #ffe600;border-radius:9px;padding:6px 10px;font:10px 'Baloo 2',sans-serif;color:#fff;max-width:75vw;pointer-events:none}
+#netstatus.good{border-color:#3dff7a}#netstatus.bad{border-color:#ff5a4a}
+</style></head><body>
+<div id="bg"></div><canvas id="fx"></canvas><div id="app"></div><div id="netstatus" aria-live="polite">Offline · choose HOST or PLAYER</div>
+<script>
+const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const PRE='gameknb3-',COLS=['#ff3b3b','#2ecbff','#ff8a1e','#3dff7a','#ff4fd8','#a074ff','#ffffff','#00ffd0','#ff6f91','#b6ff00'];
+const Q=[
+["As defined in the lesson, assertiveness is bold and confident statements or behavior done out of what?",["A sense of urgency and pressure","A sense of respect and caring","A sense of authority and control","A sense of persistence and determination"],1],
+["Why does assertiveness matter in sales?",["It helps shorten conversations by limiting customer choices.","It helps control discussions by preventing customer objections.","It helps secure commitments through repeated persuasion.","It helps discover mutual needs without appearing pushy or salesy."],3],
+["Which tone is typical of an assertive salesperson?",["Friendly and apologetic when customers express hesitation","Direct and urgent when customers delay their decisions","Confident and persuasive without becoming forceful or pushy","Neutral and formal to maintain consistency throughout conversations"],2],
+["Which describes the approach of an aggressive salesperson?",["Uses manipulative or misleading tactics to pressure customers into buying","Uses personalized recommendations based on the customer's stated requirements","Uses patient communication while allowing customers to decide freely","Uses relevant product benefits to address the customer's specific needs"],0],
+["An assertive salesperson's focus is best described as:",["Achieving immediate results through consistent sales efforts","Increasing monthly sales through frequent customer conversions","Securing customer commitments before ending conversations","Building lasting relationships through trust and mutual understanding"],3],
+["According to the lesson, what are an aggressive seller's listening skills like?",["Shows little interest in customer needs and focuses mainly on closing sales","Shows selective interest in customer responses that indicate buying readiness","Shows moderate interest in customer concerns to prepare persuasive responses","Shows strong attention to customer statements but overlooks nonverbal signals"],0],
+["What does the lesson say happens when you come across as aggressive to client or prospect?",["It creates an impression of confidence and strengthens control of the conversation.","It communicates urgency and encourages customers to decide more quickly.","It creates an impression of desperation or hostility and damages customer trust.","It demonstrates persistence and improves the likelihood of immediate commitments."],2],
+["Where does the lesson say aggressiveness is important?",["In the presentation delivered directly to the customer","In the internal sales process when properly channeled","In responding to objections raised during conversations","In negotiating prices with customers who hesitate"],1],
+["Which is NOT listed as a benefit of being assertive?",["Achieving mutually beneficial outcomes through communication","Establishing stronger trust through respectful interactions","Discovering common ground through meaningful discussions","Closing more deals by minimizing customer objections"],3],
+["Which is part of the pre-call planning under \"Be clear about what you want\"?",["Identifying the conversation's purpose and defining the desired outcome","Preparing persuasive closing statements for possible customer objections","Identifying competitor weaknesses that could strengthen your presentation","Establishing acceptable pricing limits before discussing the offer"],0],
+["Which of these helps you \"be confident\"?",["Speaking more quickly to maintain control of the conversation","Delaying difficult questions until the presentation is completed","Understanding buyer psychology and asking effective qualifying questions","Repeating important product claims to strengthen customer interest"],2],
+["Which tactic is listed under \"Be prepared\"?",["Practicing one consistent sales presentation for every customer","Studying common objections and preparing relevant supporting information","Preparing special discounts whenever customers express hesitation","Reviewing customer information before introducing the product"],1],
+["Under \"Be respectful,\" what does seeking a \"Yes\" or \"No\" show?",["Respect for both parties' time by focusing on clear outcomes","Consideration for customers by reducing unnecessary discussion","Awareness of customer urgency by encouraging timely decisions","Confidence in the offer by requesting a definite commitment"],0],
+["The lesson says to be aggressive in your ______ but never in your ______.",["Approach; communication","Presentation; delivery","Offers; personality","Process; angle"],3],
+["If you notice you are coming across as aggressive, what should you do?",["Reduce your speaking volume while maintaining the same delivery style","Proceed directly to the closing statement before interest decreases","Adjust your body language and soften your approach to match the customer","Repeat the main product benefits using a slower speaking pace"],2],
+["The assertive approach is focused on:",["Explaining product features to provide customers with complete information","Identifying customer budgets before presenting available product options","Highlighting benefits, addressing needs, and supporting informed decisions","Anticipating possible objections before customers express their concerns"],2],
+["How does an assertive salesperson treat the customer's decision?",["Respects customer independence and decisions, even without an immediate sale","Accepts customer preferences while continuing to request a firm commitment","Considers customer decisions temporary and revisits offers during future calls","Accepts customer choices after receiving a clear explanation for the decision"],0],
+["What does \"lack of respect\" look like in an aggressive approach?",["Correcting customer misunderstandings before continuing the conversation","Presenting similar promotional offers to customers with comparable needs","Introducing product information before establishing a personal connection","Ignoring customer objections and disregarding their comfort level"],3],
+["Which describes the tone of an aggressive salesperson?",["Fast-paced, with brief responses intended to shorten the conversation","Forceful, high-pressure, and frequently confrontational","Formal, with carefully structured language and limited personal interaction","Persistent, with repeated questions intended to confirm customer interest"],1],
+["An aggressive salesperson has a short-term focus. What does this prioritize?",["Immediate results and quick sales instead of lasting customer relationships","Repeat purchases and customer retention instead of initial sales performance","Customer referrals and recommendations instead of acquiring new prospects","Transaction accuracy and documentation instead of completing sales quickly"],0],
+["By definition, aggressiveness is:",["A firm and direct expression intended to defend one's personal position","A determined effort to accomplish objectives within a limited period","A forceful action, particularly one intended to dominate or master","A competitive attitude intended to outperform others in the workplace"],2],
+["Which statement best summarizes the lesson's reminder?",["Aggression encourages quick transactions, while assertiveness supports customer retention.","Assertiveness generates customer interest, while aggression increases sales opportunities.","Assertiveness improves sales performance, while aggression strengthens customer loyalty.","Assertiveness earns customer respect, while aggression damages customer trust."],3],
+["According to the lesson, what makes it difficult for others to believe in you and invest their money?",["Having insufficient knowledge about the products and services being offered","Lacking confidence in yourself and the value of your own capabilities","Communicating with a soft voice during important customer conversations","Failing to establish clear objectives before making customer calls"],1],
+["The lesson says being flexible in a sales conversation is accomplished by:",["Preparing alternative product offers whenever customers decline the initial recommendation","Following the prepared presentation to maintain consistency throughout the discussion","Avoiding an outcome-based mindset and remaining open during the conversation","Revising the sales presentation whenever customers express uncertainty or hesitation"],2],
+["When a sales call doesn't go as planned, what helps you avoid coming across as defensive?",["Being prepared to adjust your strategy according to the customer's needs","Explaining your original recommendation again using clearer and calmer language","Providing additional discounts to restore the customer's interest in the offer","Ending the conversation professionally and scheduling another contact later"],0],
+["Which questions does the lesson suggest asking your customer?",["Which competing brands are you considering, and what makes them appealing?","When do you expect to finalize your decision regarding this purchase?","How much money have you allocated for the product or service?","What problem are you trying to solve, and what do you need?"],3],
+["Under the assertive communication tips, \"Clarity\" means:",["Explaining product information using simple and understandable language","Being bold and confident while maintaining respect and care for customers","Presenting product prices and conditions before discussing other details","Providing concise responses to prevent customers from feeling overwhelmed"],1],
+["What does \"Self-Awareness\" involve in assertive communication?",["Evaluating recorded conversations to identify communication mistakes and weaknesses","Monitoring sales performance to recognize changes in productivity and results","Observing personal posture and facial expressions to remain approachable","Reflecting on emotional reactions to prevent rejection from affecting future interactions"],2],
+["According to the conclusion, when should you use assertiveness?",["When establishing meaningful customer relationships built on mutual trust","When encouraging hesitant customers to make faster purchasing decisions","When gaining stronger negotiating positions during product price discussions","When differentiating your presentation from competitors' sales approaches"],0],
+["What is the purpose of an assertive salesperson's active listening?",["Identifying appropriate opportunities to introduce discounts and promotions","Understanding customer needs and preferences to personalize the sales presentation","Recognizing potential objections early to prepare appropriate responses","Confirming customer readiness before requesting a final purchasing decision"],1]];
+const TF=['TRUE','FALSE'],AA=['ASSERTIVE','AGGRESSIVE'];
+const KOQ=[
+["Assertiveness respects the customer’s decisions, even when there is no immediate sale.",TF,0],
+["Aggressive salespeople prioritize long-term relationships over quick sales.",TF,1],
+["Being assertive means avoiding persuasion so the customer never feels pushed.",TF,1],
+["An aggressive approach may use manipulative or misleading tactics.",TF,0],
+["Assertiveness empowers you to ask for what the prospect wants and go after it with confidence.",TF,0],
+["Scenario 1: The customer says the price is too high. The agent replies, “This deal ends today and I can’t hold it. If you don’t buy now, you’ll regret it.”",AA,1,"High-pressure and forceful; ignores the customer’s concern."],
+["Scenario 2: The customer says they need to think it over. The agent replies, “That’s fair. I’ll send the details now. Can I follow up on Thursday after you’ve compared options?”",AA,0,"Respects the customer’s time and secures a clear next step."],
+["Scenario 3: Before a call, the agent writes down the goal (book a demo), reviews the customer’s past orders, and prepares answers to common objections.",AA,0,"Shows preparation: clear purpose, data, objection handling."],
+["Scenario 4: The customer declines an upsell twice. The agent says, “Are you sure? Most people say yes once I explain it again,” and goes through the whole offer a third time.",AA,1,"Disregards the customer’s repeated refusal."],
+["Scenario 5: The customer says they need their manager’s approval. The agent replies, “Skip your manager. You can decide this yourself right now.”",AA,1,"Pushes past the authority objection instead of bringing in the decision-maker."],
+["Scenario 6: The customer sounds unsure. The agent notices the hesitant tone, slows down, and asks, “What would make this a better fit for you?”",AA,0,"Active listening to tone, plus a question to understand needs."]];
+/* ---------- audio ---------- */
+let AC,mute=false,bi=0;
+function snd(seq){if(mute)return;try{AC=AC||new AudioContext();const n=AC.currentTime;seq.forEach(([f,t,d,ty,v])=>{const o=AC.createOscillator(),g=AC.createGain();o.type=ty||'triangle';o.frequency.value=f;g.gain.setValueAtTime(v||.14,n+t);g.gain.exponentialRampToValueAtTime(.001,n+t+d);o.connect(g).connect(AC.destination);o.start(n+t);o.stop(n+t+d)})}catch(e){}}
+const S_OK=[[523,0,.12],[659,.1,.12],[784,.2,.12],[1047,.3,.35]],S_BAD=[[300,0,.2,'sawtooth',.1],[200,.18,.35,'sawtooth',.1]],S_BUZ=[[880,0,.25,'square',.1]],S_TK=[[660,0,.08,'square',.06]],S_GO=[[1175,0,.3,'square',.08]];
+const MEL=[523,587,659,784,880,784,659,587,523,659,784,1047,880,784,659,587];
+setInterval(()=>{if(AC&&!mute&&role&&!(G&&G.pa))snd([[MEL[bi++%MEL.length],0,.3,'sine',.035]])},380);
+document.addEventListener('pointerdown',()=>{AC=AC||new AudioContext();AC.resume()},{once:true});
+/* ---------- background & tilt ---------- */
+(function(){const b=$('bg'),cs=['#ffe600','#ff3b3b','#2ecbff','#3dff7a','#ff4fd8'];for(let i=0;i<26;i++){const d=document.createElement('div'),s=20+Math.random()*70;d.className='fl';d.style.cssText=`left:${Math.random()*100}%;width:${s}px;height:${s}px;background:${cs[i%5]};animation-duration:${18+Math.random()*30}s;animation-delay:-${Math.random()*40}s`;b.appendChild(d)}})();
+document.addEventListener('mousemove',e=>{const r=document.documentElement.style;r.setProperty('--ry',((e.clientX/innerWidth-.5)*14).toFixed(1)+'deg');r.setProperty('--rx',(-(e.clientY/innerHeight-.5)*10).toFixed(1)+'deg')});
+/* ---------- logo ---------- */
+const row=(t,c)=>`<div class="lr ${c}">${[...t].map(l=>`<i>${l}</i>`).join('')}</div>`;
+const logo=()=>`<div class="logo"><div class="lt"><span>COHORT 3</span></div>${row('GAME','b')}${row('KNB?','g')}</div>`;
+function revealLogo(el){el.querySelectorAll('.lr i').forEach((i,n)=>setTimeout(()=>i.classList.add('on'),250+n*170))}
+/* ---------- state ---------- */
+let role,peer,conn,conns=[],me,G,last,ps=null,photos={},purl={},hostTick=null;
+const NET=$('netstatus');
+function netmsg(message,kind=''){if(NET){NET.textContent=message;NET.className=kind}}
+async function getPeerConfig(){
+  netmsg('Connecting · preparing secure network route…');
+  const r=await fetch('/.netlify/functions/turn-ice',{cache:'no-store'});
+  if(!r.ok)throw new Error(r.status===503?'TURN service is not configured yet. Ask the site owner to finish the setup.':'Could not get relay settings. Check internet and try again.');
+  const iceServers=await r.json();
+  if(!Array.isArray(iceServers)||!iceServers.length)throw new Error('TURN service returned no ICE servers.');
+  return {config:{iceServers,iceTransportPolicy:'all'}};
+}
+function stopLocalMedia(){if(vstream){vstream.getTracks().forEach(t=>t.stop());vstream=null}}
+function shutdownHost(reason='Host left the room.'){
+  if(role!=='host'||!peer)return;
+  try{conns.forEach(c=>{try{c.send({t:'ended',m:reason})}catch(e){};try{c.close()}catch(e){}})}catch(e){}
+  conns=[];if(hostTick){clearInterval(hostTick);hostTick=null}
+  try{peer.destroy()}catch(e){};peer=null;
+}
+window.addEventListener('pagehide',()=>{if(role==='host')shutdownHost('Host refreshed or closed the page.');if(role==='player'){try{conn&&conn.close();peer&&peer.destroy()}catch(e){}}});
+window.addEventListener('beforeunload',()=>{if(role==='host')shutdownHost('Host refreshed or closed the page.')});
+const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const fwd=p=>{const c=p[p.length-1];if(!c)return[0,1,2,3,4].map(x=>[0,x]);const o=[];for(const d of[-1,0]){const n=c[1]+d;if(c[0]<4&&n>=0&&n<4-c[0])o.push([c[0]+1,n])}return o};
+const tgs=(s,id)=>s.o.filter(x=>x!==id&&!s.T[x].qual&&s.T[x].path.length);
+function d2u(d){const b=atob(d.split(',')[1]),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return URL.createObjectURL(new Blob([a],{type:'image/jpeg'}))}
+/* ---------- home ---------- */
+function home(){$('app').innerHTML=`<div class="home">${logo()}<div class="row"><button class="btn" id="bh">HOST</button><button class="btn b" id="bp">PLAYER</button></div><button class="btn y" id="bm" style="margin-top:-2vh">MECHANICS</button></div>`;revealLogo($('app'));$('bh').onclick=hostInit;$('bp').onclick=joinForm;$('bm').onclick=mech}
+function mech(){const d=document.createElement('div');d.className='mech';d.innerHTML=`<div class="panel mp"><h2>HOW TO PLAY</h2><div class="ms"><h3>BEFORE THE GAME</h3><ul><li>The host opens a room and shares the 4-letter room code.</li><li>Each team joins as a PLAYER with the room code, a team name and a group photo.</li><li>The host presses START once everyone has joined (at least 2 teams).</li></ul></div><div class="ms"><h3>ROUND 1 · ELIMINATION</h3><ul><li><b>GET READY (5s):</b> a question appears. Do NOT press SPACE yet. Pressing early shows <b>TOO EARLY!</b> on your photo and locks you out of that question.</li><li><b>BUZZ IN (20s):</b> when the buzz opens, the first team to press SPACE answers.</li><li><b>CORRECT:</b> you earn a point and climb the pyramid. Choose <b>ABANTI!</b> to climb 1 glowing block (the first climb starts on the bottom row), or <b>ATRAS KA!</b> to send another team back 1 block and climb too. ATRAS KA can be used once per team. If you do not choose in time, you move up automatically.</li><li><b>WRONG:</b> your team is locked out and it is a <b>STEAL!</b> The other teams may buzz and answer. If nobody gets it, the answer is revealed and a new question starts.</li><li><b>QUALIFY:</b> the first team to reach the top block gets the star and waits. The round ends when 2 teams have qualified; every other team is <b>ELIMINATED</b>.</li></ul></div><div class="ms"><h3>ROUND 2 · KNOCK-OUT (FACE-OFF)</h3><ul><li>The 2 qualified teams face each other, with the same GET READY and TOO EARLY! rules.</li><li>Buzz with SPACE, then pick your answer. Each correct answer is 1 point. A wrong answer lets your opponent steal.</li><li>When the questions run out, the team with more points becomes the <b>CHAMPION</b>. A tie goes to SUDDEN DEATH until someone leads.</li></ul></div><button class="btn y" id="mc">CLOSE</button></div>`;const x=()=>{d.remove();removeEventListener('keydown',k)},k=e=>e.key==='Escape'&&x();d.onclick=e=>e.target===d&&x();addEventListener('keydown',k);document.body.appendChild(d);d.querySelector('#mc').onclick=x}
+home();
+/* ---------- HOST engine ---------- */
+const rc=()=>[...Array(4)].map(()=>'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.random()*31|0]).join('');
+async function hostInit(){if(typeof Peer==='undefined')return alert('Internet is needed to load the connection library (PeerJS).');role='host';G={ph:'lobby',pa:false,T:{},o:[],q:null,ql:[],kt:[],deck:[],qn:0,w:null,sd:0};
+ try{const opts=await getPeerConfig();openRoom(opts)}catch(e){role=null;netmsg('Connection setup failed · '+e.message,'bad');alert(e.message+'\n\nThe Netlify TURN setup must be completed before multiplayer can start.')}}
+function openRoom(opts){G.code=rc();peer=new Peer(PRE+G.code,opts);peer.on('open',()=>{netmsg('Host connected · room '+G.code,'good');showGame();bc();if(hostTick)clearInterval(hostTick);hostTick=setInterval(tick,200)});
+ peer.on('error',e=>{if(e.type==='unavailable-id'){peer.destroy();openRoom(opts)}else{netmsg('Host connection error · '+e.type,'bad');alert('Connection error: '+e.type)}});
+ peer.on('connection',c=>{conns.push(c);c.on('data',d=>onMsg(c,d));c.on('close',()=>{conns=conns.filter(x=>x!==c);const id=c.teamId||c.peer;if(conns.some(x=>x.teamId===id&&x.open))return;if(G.T[id]){G.T[id].online=false;G.T[id].disconnectedAt=Date.now();bc();if(G.ph==='lobby')setTimeout(()=>{if(G.T[id]&&!G.T[id].online&&Date.now()-G.T[id].disconnectedAt>=60000){delete G.T[id];G.o=G.o.filter(x=>x!==id);delete photos[id];delete purl[id];bc()}},61000)}})})}
+
+function pub(){const q=G.q;return{ph:G.ph,pa:G.pa,code:G.code,T:G.T,o:G.o,kt:G.kt,w:G.w,sd:G.sd,q:q&&{st:q.st,tl:q.tl,x:q.x,ch:q.ch,buz:q.buz,lk:q.lk,er:q.er,sel:q.sel,rev:q.rev,bn:q.bn,mv:q.mv,e:q.rev>=0?q.e:'',n:G.qn}}}
+function bc(){const s=pub();conns.forEach(c=>c.open&&c.send({t:'st',s}));render(s)}
+function onMsg(c,d){let id=c.teamId||c.peer;const q=G.q;
+ if(d.t==='join'){
+  if(G.ph==='ended'||G.ph==='champion')return c.send({t:'err',m:'This room has already ended.'});
+  if(d.token){const old=G.o.find(k=>G.T[k]&&G.T[k].token===d.token);if(old){id=old;c.teamId=old;G.T[old].online=true;G.T[old].disconnectedAt=0;const previous=conns.filter(x=>x!==c&&x.teamId===old);previous.forEach(x=>{try{x.close()}catch(e){}});if(d.ph){photos[old]=d.ph;purl[old]=d2u(d.ph)}c.send({t:'ph',p:photos});c.send({t:'ok',rejoined:true,id:old});c.send({t:'st',s:pub()});bc();return}}
+  if(G.ph!=='lobby')return c.send({t:'err',m:'Game already started. New teams cannot join now.'});
+  const n=G.o.length;id=c.peer;c.teamId=id;G.T[id]={n:String(d.n).slice(0,20),c:COLS[n%COLS.length],p:0,k:0,path:[],qual:false,at:false,token:String(d.token||''),online:true,disconnectedAt:0};G.o.push(id);photos[id]=d.ph;purl[id]=d2u(d.ph);conns.forEach(x=>x!==c&&x.open&&x.send({t:'ph',p:{[id]:d.ph}}));c.send({t:'ph',p:photos});c.send({t:'ok',id});bc();return
+ }
+ if(d.t==='resume')return;
+ if(!G.T[id]||!c.teamId)return;
+ if(G.pa)return;else if(d.t==='buz')buzz(id);else if(d.t==='ans')ans(id,d.i);else if(d.t==='mv')mvMsg(id,d)}
+const elig=()=>G.ph==='ko'?G.kt:G.o.filter(i=>!G.T[i].qual);
+function buzz(id){const q=G.q,t=G.T[id];if(!q||!t||!elig().includes(id)||q.lk.includes(id)||q.er.includes(id))return;
+ if(q.st==='head'){q.er.push(id);q.bn={x:'TOO EARLY!',n:t.n,id};setTimeout(()=>{if(G.q===q&&q.bn){q.bn=null;bc()}},1800)}
+ else if(q.st==='open'){q.buz=id;q.st='answer';q.tl=20;q.bn=null}else return;bc()}
+function ans(id,i){const q=G.q;if(!q||q.st!=='answer'||q.buz!==id)return;q.sel=i;
+ if(i===q.a){q.rev=q.a;G.T[id].p++;if(G.ph==='ko'){G.T[id].k++;q.st='rev';q.tl=2.5}else{q.st='move';q.tl=20;q.mv={m:null,tg:null}}}else fail(1);bc()}
+function fail(w){const q=G.q;q.lk.push(q.buz);if(elig().some(i=>!q.lk.includes(i))){q.st='steal';q.tl=3;q.buz=null;if(!w)q.sel=null}else{q.buz=null;reveal()}}
+function reveal(){const q=G.q;q.rev=q.a;q.st='rev';q.tl=3}
+function mvMsg(id,d){const q=G.q;if(!q||q.st!=='move'||q.buz!==id)return;const t=G.T[id],m=q.mv;
+ if(d.k==='m'){if(d.m==='atras'&&(t.at||!tgs(pub(),id).length))return;if(d.m==='abanti'||d.m==='atras')q.mv={m:d.m,tg:null}}
+ else if(d.k==='tg'){if(m.m==='atras'&&tgs(pub(),id).includes(d.id))m.tg=d.id}
+ else if(d.k==='b'){if(!m.m||(m.m==='atras'&&!m.tg)||!fwd(t.path).some(b=>b[0]===d.r&&b[1]===d.c))return;doMove(id,d.r,d.c)}bc()}
+function doMove(id,r,c){const q=G.q,t=G.T[id];if(q.mv.m==='atras'){G.T[q.mv.tg].path.pop();t.at=true}t.path.push([r,c]);if(r===4){t.qual=true;G.ql.push(id)}q.st='rev';q.tl=1.5}
+function nextQ(){const ko=G.ph==='ko',B=ko?KOQ:Q;if(!G.deck.length)G.deck=shuf(B.map((_,i)=>i));const it=B[G.deck.pop()];G.qn++;G.q={st:'head',tl:5,x:it[0],ch:it[1],a:it[2],e:it[3]||'',buz:null,lk:[],er:[],sel:null,rev:-1,bn:null,mv:null}}
+function after(){if(G.ph==='elim'){if(G.ql.length>=2){G.ph='elimdone';G.q=null;return}}
+ else{const[a,b]=G.kt.map(i=>G.T[i].k);if(!G.deck.length||G.sd){if(a!==b){G.w=a>b?G.kt[0]:G.kt[1];G.ph='champion';G.q=null;setTimeout(()=>{if(G.ph==='champion'){G.ph='ended';bc();setTimeout(()=>shutdownHost('The game has ended.'),500)}},7000);return}if(!G.deck.length)G.sd=1}}nextQ()}
+function tick(){const q=G.q;if(role!=='host'||G.pa||!q)return;q.tl=Math.round((q.tl-.2)*10)/10;
+ if(q.tl<=0){if(q.st==='head'){q.st='open';q.tl=20}else if(q.st==='open')reveal();else if(q.st==='answer')fail();
+ else if(q.st==='steal'){q.st='head';q.tl=5;q.er=[];q.sel=null}
+ else if(q.st==='move'){const id=q.buz;if(!(q.mv.m==='atras'&&q.mv.tg))q.mv={m:'abanti',tg:null};const b=fwd(G.T[id].path)[0];doMove(id,b[0],b[1])}
+ else if(q.st==='rev')after()}bc()}
+function act(a){if(G.pa&&a!=='pz')return;if(a==='go'&&G.o.length>=2){G.ph='elim';G.qn=0;nextQ()}else if(a==='pz')G.pa=!G.pa;else if(a==='end'){if(!confirm('End the game now?'))return;G.ph='ended';G.q=null}
+ else if(a==='ko'){G.ph='ko';G.kt=G.ql.slice(0,2);G.deck=[];G.qn=0;nextQ()}bc();if(G.ph==='ended'){setTimeout(()=>shutdownHost('The host ended the game.'),500)}}
+/* ---------- PLAYER ---------- */
+let vstream,photo=null;
+function joinForm(){role='player';$('app').innerHTML=`<div class="home"><div class="panel jn"><h2>JOIN THE GAME</h2><input id="jc" placeholder="ROOM CODE" maxlength="4"><input id="jn" placeholder="TEAM NAME" maxlength="20"><div class="cam"><video id="vid" autoplay playsinline muted></video><img id="snap" hidden></div><div class="row"><button class="btn y" id="clk">CLICK</button><button class="btn sm b" id="rt" hidden>RETAKE</button></div><button class="btn g" id="jb" disabled>JOIN</button><p id="jm" style="font-size:1.8vh">Allow your camera, then take your group photo.</p></div></div>`;
+ navigator.mediaDevices.getUserMedia({video:{width:{ideal:4096},height:{ideal:2160},facingMode:'user'},audio:false}).then(s=>{vstream=s;$('vid').srcObject=s}).catch(()=>$('jm').textContent='Camera is required. Allow camera access and reload.');
+ const savedName=sessionStorage.getItem('knb_team_name'),savedPhoto=sessionStorage.getItem('knb_photo');if(savedName)$('jn').value=savedName;if(savedPhoto){photo=savedPhoto;$('snap').src=savedPhoto;$('snap').hidden=false;$('vid').hidden=true;$('clk').hidden=true;$('rt').hidden=false;$('jb').disabled=false;$('jm').textContent='Saved team photo found. Enter the same room code to reconnect.'}
+ $('clk').onclick=()=>{const v=$('vid');if(!v.videoWidth)return;const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);
+  const k=Math.min(1,1280/Math.max(c.width,c.height)),o=document.createElement('canvas');o.width=c.width*k;o.height=c.height*k;const x=o.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(c,0,0,o.width,o.height);photo=o.toDataURL('image/jpeg',.92);
+  $('snap').src=photo;$('snap').hidden=false;v.hidden=true;$('rt').hidden=false;$('clk').hidden=true;$('jb').disabled=false;snd(S_GO)};
+ $('rt').onclick=()=>{photo=null;$('snap').hidden=true;$('vid').hidden=false;$('rt').hidden=true;$('clk').hidden=false;$('jb').disabled=true};
+ $('jb').onclick=async()=>{const code=$('jc').value.trim().toUpperCase(),n=$('jn').value.trim();if(code.length!==4||!n||!photo)return $('jm').textContent='Enter the 4-character room code, team name, and take a photo.';
+  if(typeof Peer==='undefined')return $('jm').textContent='Internet is needed to connect.';$('jm').textContent='Connecting securely…';$('jb').disabled=true;netmsg('Player connecting · requesting relay route…');
+  try{const opts=await getPeerConfig();const token=sessionStorage.getItem('knb_resume_token')||crypto.randomUUID();sessionStorage.setItem('knb_resume_token',token);sessionStorage.setItem('knb_team_name',n);sessionStorage.setItem('knb_photo',photo);
+   peer=new Peer(undefined,opts);peer.on('open',id=>{me=id;conn=peer.connect(PRE+code,{reliable:true});const timeout=setTimeout(()=>{if(!conn.open){$('jm').textContent='Room not found or host is offline. Check the code.';$('jb').disabled=false;netmsg('Could not reach room · check code or host','bad')}},12000);
+    conn.on('open',()=>{clearTimeout(timeout);netmsg('Connected to host · waiting for game state','good');conn.send({t:'join',n,ph:photo,token})});
+    conn.on('data',d=>{if(d.t==='ok'){stopLocalMedia();$('jm').textContent=d.rejoined?'Reconnected to your team!':'Joined successfully!';if(d.id)me=d.id;netmsg(d.rejoined?'Reconnected to existing team':'Connected · waiting for host','good');showGame()}else if(d.t==='err'){$('jm').textContent=d.m;$('jb').disabled=false;netmsg(d.m,'bad')}
+     else if(d.t==='ph'){for(const k in d.p)purl[k]=d2u(d.p[k]);last&&render(last)}else if(d.t==='st'){last=d.s;render(d.s)}else if(d.t==='ended'){netmsg(d.m||'Room ended','bad');const o=$('ov');o&&(o.innerHTML='<div class="ov"><h1>ROOM ENDED</h1><p>The host closed or refreshed the game.</p></div>')}});
+    conn.on('close',()=>{netmsg('Disconnected · trying to reconnect is possible while room is active','bad');const o=$('ov');o&&(o.innerHTML='<div class="ov"><h1>DISCONNECTED</h1><p>The host may have left, or your internet connection dropped.</p><p>Return to PLAYER and join again using the same team name and this browser tab.</p></div>')})});
+   peer.on('error',e=>{$('jm')&&($('jm').textContent='Could not connect ('+e.type+'). Check the room code and try again.');$('jb')&&($('jb').disabled=false);netmsg('Connection failed · '+e.type,'bad')});
+  }catch(e){$('jm').textContent=e.message;$('jb').disabled=false;netmsg('Connection setup failed · '+e.message,'bad')}}}
+
+const send=m=>{if(ps&&ps.pa)return;conn&&conn.open&&conn.send(m)};
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&role==='player'&&$('game')){e.preventDefault();if(!e.repeat)send({t:'buz'})}});
+document.addEventListener('click',e=>{const t=e.target.closest('[data-i],[data-mv],[data-tg],[data-blk],[data-act]');if(!t)return;const d=t.dataset;
+ if(d.act==='snd'){mute=!mute;t.textContent=mute?'🔇':'🔊'}else if(d.act&&role==='host')act(d.act);
+ else if(d.i!==undefined)send({t:'ans',i:+d.i});else if(d.mv)send({t:'mv',k:'m',m:d.mv});
+ else if(d.tg)send({t:'mv',k:'tg',id:d.tg});else if(d.blk){const[r,c]=d.blk.split(',').map(Number);send({t:'mv',k:'b',r,c})}});
+/* ---------- game view ---------- */
+function showGame(){const h=role==='host';$('app').innerHTML=`<div id="game" class="big"><aside id="side">${h?'<div class="panel" id="rc"><h3>ROOM CODE</h3><div class="code">'+G.code+'</div><small id="pc"></small></div>':'<div class="panel" id="me"></div>'}<div class="panel lbp"><h3>LEADERBOARD</h3><div id="lb"></div></div>${h?'<div class="panel" id="ctl"></div>':''}</aside><main id="main"><div id="hdr"><div id="lg"></div><h2 id="rd"></h2><button class="btn sm" data-act="snd">🔊</button></div><div id="stage"><div id="pyr"></div><div id="qpop"></div></div><div id="teams"></div></main><div id="ov"></div><div id="qw"><div><b>QUALIFIED!</b>WAIT FOR ANOTHER TEAM TO ADVANCE.</div></div></div>`;
+ $('lg').innerHTML=logo();revealLogo($('lg'));if(h)render(pub())}
+const upd=(el,h)=>{if(el&&el._h!==h){el.innerHTML=h;el._h=h}};
+const RD={lobby:'WAITING ROOM',elim:'ELIMINATION ROUND',elimdone:'ELIMINATION DONE',ko:'FACE-OFF ROUND',champion:'CHAMPION!',ended:'GAME ENDED'};
+function render(s){if(!$('game'))return;const h=role==='host',q=s.q,T=s.T,o=s.o,ko=s.ph==='ko';
+ $('game').classList.toggle('big',!(q&&q.st==='move'));
+ $('qw').classList.toggle('on',role==='player'&&!!T[me]&&!!T[me].qual&&s.ph==='elim'&&!s.pa);
+ $('rd').textContent=RD[s.ph]+(s.sd?' · SUDDEN DEATH':'');
+ const dim=q&&!ko&&(['head','open','answer','steal'].includes(q.st)||(q.st==='rev'&&!q.mv));$('stage').className=(dim?'dim ':'')+(ko?'ko':'');
+ /* pyramid / ko */
+ if(ko||s.ph==='champion'&&s.kt.length){upd($('pyr'),`<div class="ko">${kt(s,s.kt[0])}<div>${qh(s)}</div>${kt(s,s.kt[1])}</div>`);upd($('qpop'),'');$('teams').style.display='none'}
+ else{$('teams').style.display='';upd($('pyr'),pyr(s));upd($('qpop'),qh(s));upd($('teams'),o.map(id=>{const t=T[id],tg=q&&q.st==='move'&&q.mv.m==='atras'&&!q.mv.tg&&q.buz===id?0:q&&q.st==='move'&&q.mv.m==='atras'&&!q.mv.tg&&tgs(s,q.buz).includes(id);
+  return`<div class="tc ${q&&q.buz===id?'buz':''} ${s.ph==='elimdone'&&!t.qual?'out':''} ${tg?'tg':''}" style="--c:${t.c}" ${tg?`data-tg="${id}"`:''}><img src="${purl[id]||''}"><b>${esc(t.n)}</b><small>${t.qual?'★ QUALIFIED':'▲'+t.path.length+(t.at?'':' · no ATRAS')}</small>${q&&q.bn&&q.bn.id===id?'<div class="tag"><span>TOO<br>EARLY!</span></div>':s.ph==='elimdone'&&!t.qual?'<div class="tag el"><span>ELIMINATED<br>:(<br>BETTER LUCK<br>NEXT TIME!</span></div>':''}</div>`}).join(''))}
+ /* timer */
+ const tm=$('tm');if(tm&&q){tm.textContent=Math.ceil(q.tl);tm.className='tm'+(q.tl<=5&&q.st!=='head'?' r':'')}
+ /* side */
+ upd($('lb'),[...o].sort((a,b)=>rk(T[b])-rk(T[a])).map((id,i)=>{const t=T[id];return`<div class="lbr" style="--n:${o.length}"><b>${i+1}</b><img src="${purl[id]||''}"><span style="color:${t.c}">${esc(t.n)}</span><em>${t.p}pt ▲${t.path.length}${ko||s.ph==='champion'?' ⚔'+t.k:''}</em></div>`}).join('')||'<small>No teams yet</small>');
+ if(h)$('pc').textContent='Players joined: '+o.length+' · online: '+o.filter(id=>T[id].online!==false).length;else upd($('me'),T[me]?`<h3>YOUR TEAM</h3><b style="color:${T[me].c}">${esc(T[me].n)}</b><br><small>Press SPACE to buzz · ATRAS KA: ${T[me].at?'used':'ready'}</small>`:'');
+ if(h)upd($('ctl'),{lobby:`<button class="btn g" data-act="go" ${o.length<2?'disabled':''}>START</button>`,elim:ctl(s),ko:ctl(s),elimdone:`<button class="btn g" data-act="ko">START KNOCKOUT</button><button class="btn" data-act="end">END</button>`}[s.ph]||'');
+ /* overlay */
+ let ov='';if(s.pa)ov='<div class="ov"><h1>PAUSED</h1>'+(h?'<button class="btn y" data-act="pz">RESUME</button>':'<h3>Waiting for the host to resume…</h3>')+'</div>';else if(s.ph==='ended')ov='<div class="ov"><h1>GAME ENDED</h1><h3>Thanks for playing!</h3></div>';
+ else if(s.ph==='champion'){const w=T[s.w];ov=`<div class="ov champ"><h3>🏆 CHAMPION 🏆</h3><img src="${purl[s.w]||''}"><h1 style="color:${w.c}">${esc(w.n)}</h1></div>`}
+ upd($('ov'),ov);if(s.ph==='champion'&&!fxOn)fxStart();if(s.ph==='ended'&&fxOn){fxOn=false;P=[];cx.clearRect(0,0,cv.width,cv.height)}
+ sfx(ps,s);ps=s}
+const rk=t=>t.k*1000+(t.qual?500:0)+t.path.length*10+t.p;
+const ctl=s=>`<button class="btn y" data-act="pz">${s.pa?'RESUME':'PAUSE'}</button><button class="btn" data-act="end">END</button>`;
+function kt(s,id){const t=s.T[id],q=s.q;return`<div class="kt ${q&&q.buz===id?'buz':''}" style="--c:${t.c}"><img src="${purl[id]||''}"><b>${esc(t.n)}</b><h1>${t.k}</h1>${q&&q.bn&&q.bn.id===id?'<div class="tag"><span>TOO<br>EARLY!</span></div>':''}</div>`}
+function pyr(s){const q=s.q,occ={},cur={};for(const id of s.o){const p=s.T[id].path;p.forEach(b=>(occ[b]=occ[b]||[]).push(id));if(p.length)(cur[p[p.length-1]]=cur[p[p.length-1]]||[]).push(id)}
+ let sel=[];if(q&&q.st==='move'&&q.mv.m&&!(q.mv.m==='atras'&&!q.mv.tg))sel=fwd(s.T[q.buz].path).map(String);
+ let h='<div class="pin">';for(let r=4;r>=0;r--)for(let c=0;c<5-r;c++){const k=r+','+c,cs=(occ[k]||[]).map(i=>s.T[i].c),cu=(cur[k]||[]).map(i=>s.T[i].c);
+  const f=cs.slice(0,3).map(x=>`drop-shadow(0 0 7px ${x}) drop-shadow(0 0 16px ${x})`).join(' ');
+  const bg=cs.length?`linear-gradient(160deg,#fff7 0,#0000 45%),linear-gradient(135deg,${cs.length>1?cs.join(','):cs[0]+','+cs[0]})`:'';
+  h+=`<div class="hf ${sel.includes(k)?'sel':''} ${cu.length?'cur':''}" ${sel.includes(k)?`data-blk="${k}"`:''} style="left:calc(var(--w)*${c+r*.5});top:calc(var(--w)*${(4-r)*.866});${f?'filter:'+f:''}"><div class="hw"><div class="hx" style="${bg?'background:'+bg:''}"></div></div><div class="dots">${r===4&&!cu.length?'★':''}${cu.map(x=>`<u style="background:${x}"></u>`).join('')}</div></div>`}
+ return h+'</div>'}
+function qh(s){const q=s.q,T=s.T,mine=q&&q.buz===me&&role==='player',ko=s.ph==='ko';
+ if(s.ph==='lobby')return`<div class="qp"><h3 style="font-size:2.4vh">Waiting for teams…</h3><p class="hint">${role==='host'?'Share the room code, then press START when everyone has joined.':'Waiting for the host to start.'}</p></div>`;
+ if(s.ph==='elimdone')return`<div class="qp"><h3 style="font-size:2.4vh">Top 2 are through to the Knockout Round!</h3><p class="qx">${s.o.filter(i=>T[i].qual).slice(0,2).map(i=>esc(T[i].n)).join(' & ')}</p></div>`;
+ if(!q)return'';
+ if(q.st==='move'){const t=T[q.buz],m=q.mv;let b;
+  if(!m.m)b=mine?`<button class="btn g" data-mv="abanti">ABANTI!</button>${!t.at&&tgs(s,q.buz).length?'<button class="btn" data-mv="atras">ATRAS KA!</button>':''}`:`<span class="hint">${esc(t.n)} is choosing…</span>`;
+  else b=`<span class="hint">${m.m==='atras'&&!m.tg?'Pick a team below to send back 1 block':'Pick a glowing block to climb ▲'}</span>`;
+  return`<div class="qp mvb"><span class="qx">✔ ${esc(t.n)} is correct!</span>${b}<span id="tm" class="tm"></span></div>`}
+ if(q.st==='steal')return`<div class="qp steal"><h1>STEAL!</h1><p class="hint">Other teams can answer — get ready!</p></div>`;
+ const can=mine&&q.st==='answer',hint=q.st==='head'?'GET READY — do not press SPACE yet!':q.st==='open'?'Press SPACE to buzz in!':q.st==='answer'?esc(T[q.buz].n)+' is answering…':q.rev>=0&&q.e?esc(q.e):'';
+ return`<div class="qp"><div class="qh"><span>${ko?'':'Q'+q.n}</span><span id="tm" class="tm"></span></div><p class="qx">${esc(q.x)}</p><div class="cs">${q.ch.map((c,i)=>`<div class="ch ${ko?'big':''} ${q.rev===i?'ok':''} ${q.sel===i&&q.rev!==i?'bad':''} ${can?'can':''}" ${can?`data-i="${i}"`:''}>${ko?'':'ABCD'[i]+'. '}${esc(c)}</div>`).join('')}</div><p class="hint">${hint}</p></div>`}
+function sfx(p,s){const a=p&&p.q,b=s.q;if(!b)return;if(b.st==='head'&&a&&a.st==='head'&&Math.ceil(a.tl)!==Math.ceil(b.tl))snd(S_TK);
+ if(!a||a.st!==b.st){if(b.st==='open')snd(S_GO);if(b.st==='answer')snd(S_BUZ);if(b.st==='steal')snd(S_BAD);if(b.st==='move'||(b.st==='rev'&&b.rev>=0&&b.sel===b.rev))snd(S_OK)}
+ if(b.bn&&!(a&&a.bn))snd(S_BAD);if(s.ph==='champion'&&(!p||p.ph!=='champion'))snd(S_OK)}
+/* ---------- confetti & fireworks ---------- */
+const cv=$('fx'),cx=cv.getContext('2d');let P=[],fxOn=false,fr=0;
+function fxStart(){fxOn=true;cv.width=innerWidth;cv.height=innerHeight;requestAnimationFrame(fxLoop)}
+function burst(x,y){const c=`hsl(${Math.random()*360},100%,60%)`;for(let i=0;i<70;i++){const a=Math.random()*6.28,v=2+Math.random()*5;P.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:.06,l:70,c,r:2.2,f:1})}}
+function fxLoop(){if(!fxOn)return;fr++;cx.clearRect(0,0,cv.width,cv.height);
+ for(let i=0;i<4;i++)P.push({x:Math.random()*cv.width,y:-10,vx:Math.random()*2-1,vy:2+Math.random()*3,g:.02,l:300,c:`hsl(${Math.random()*360},90%,60%)`,r:4,f:0});
+ if(fr%35===0)burst(cv.width*(.15+Math.random()*.7),cv.height*(.15+Math.random()*.4));
+ P=P.filter(p=>p.l>0&&p.y<cv.height+20);for(const p of P){p.x+=p.vx;p.y+=p.vy;p.vy+=p.g;p.l--;cx.globalAlpha=p.f?Math.min(1,p.l/30):1;cx.fillStyle=p.c;p.f?(cx.beginPath(),cx.arc(p.x,p.y,p.r,0,6.28),cx.fill()):cx.fillRect(p.x,p.y,p.r*1.6,p.r)}
+ requestAnimationFrame(fxLoop)}
+addEventListener('resize',()=>{cv.width=innerWidth;cv.height=innerHeight});
+</script></body></html>
