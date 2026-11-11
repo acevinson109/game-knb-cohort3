@@ -31,7 +31,6 @@ export default async () => {
   try {
     const url = new URL(`https://${host}/api/v1/turn/credentials`);
     url.searchParams.set('apiKey', apiKey);
-    url.searchParams.set('region', 'global');
 
     const upstream = await fetch(url, {
       headers: { accept: 'application/json' }
